@@ -11,8 +11,8 @@ const token = process.env.TELEGRAM_BOT_TOKEN
 const bot = new TelegramBot(token, { polling: true })
 
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS
-const MONTHLY_PRICE = 0.001
-const YEARLY_PRICE = 0.01
+const MONTHLY_PRICE = process.env.MONTHLY_PRICE
+const YEARLY_PRICE = process.env.YEARLY_PRICE
 const CHAIN_ID = process.env.CHAIN_ID
 
 const uri = process.env.MONGO_URI
@@ -158,7 +158,7 @@ async function startBot() {
     })
   }
 
-  schedule.scheduleJob('0 0 * * *', checkSubscriptions)
+  schedule.scheduleJob('* * * * *', checkSubscriptions)
 
   bot.on('message', async msg => {
     if (msg.text === '/start') return
