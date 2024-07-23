@@ -2,9 +2,9 @@
   "name": "telegram-bot",
   "version": "1.0.0",
   "description": "A Telegram bot for managing subscriptions",
-  "main": "api/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/index.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
