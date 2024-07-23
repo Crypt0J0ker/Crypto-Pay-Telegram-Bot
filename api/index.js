@@ -3,19 +3,26 @@ const mongoose = require('mongoose')
 const axios = require('axios')
 const schedule = require('node-schedule')
 
-require('dotenv').config()
-
-console.log('Crypto Pay Telegram Bot is running...')
+// Загружайте dotenv только в разработческой среде
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 const bot = new TelegramBot(token, { polling: true })
 
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS
-const MONTHLY_PRICE = process.env.MONTHLY_PRICE
-const YEARLY_PRICE = process.env.YEARLY_PRICE
+const MONTHLY_PRICE = 0.001
+const YEARLY_PRICE = 0.01
 const CHAIN_ID = process.env.CHAIN_ID
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err))
 
 const subscriptionSchema = new mongoose.Schema({
   userId: Number,
@@ -31,10 +38,11 @@ const Transaction = mongoose.model('Transaction', transactionSchema)
 
 bot.onText(/\/start/, async msg => {
   const userId = msg.from.id
+  console.log(`Received /start from user ${userId}`)
 
   const subscription = await Subscription.findOne({ userId: userId })
+  const now = new Date()
   if (subscription) {
-    const now = new Date()
     if (subscription.endDate > now) {
       bot.sendMessage(userId, 'Ваша подписка активна.')
     } else {
@@ -46,7 +54,6 @@ bot.onText(/\/start/, async msg => {
 - \`${YEARLY_PRICE} ETH\` для подписки на год
 
 Затем отправьте хэш транзакции в этот чат.`
-
       bot.sendMessage(userId, message, { parse_mode: 'Markdown' })
     }
   } else {
@@ -58,13 +65,13 @@ bot.onText(/\/start/, async msg => {
 - \`${YEARLY_PRICE} ETH\` для подписки на год
 
 Затем отправьте хэш транзакции в этот чат.`
-
     bot.sendMessage(userId, message, { parse_mode: 'Markdown' })
   }
 })
 
 const checkSubscriptions = async () => {
   const now = new Date()
+  console.log(`Checking subscriptions at ${now}`)
   const expiredSubscriptions = await Subscription.find({
     endDate: { $lt: now },
   })
@@ -78,7 +85,6 @@ const checkSubscriptions = async () => {
 - \`${YEARLY_PRICE} ETH\` для подписки на год
 
 Затем отправьте хэш транзакции в этот чат.`
-
     bot.sendMessage(subscription.userId, message, { parse_mode: 'Markdown' })
   })
 
@@ -137,6 +143,9 @@ bot.on('message', async msg => {
 
   const userId = msg.from.id
   const transactionHash = msg.text.trim()
+  console.log(
+    `Received transaction hash from user ${userId}: ${transactionHash}`
+  )
 
   if (!transactionHash.startsWith('0x')) {
     bot.sendMessage(
@@ -173,6 +182,10 @@ bot.on('message', async msg => {
       ? parseInt(transaction.value, 16) / Math.pow(10, 18)
       : 0
     const chainId = transaction.chainId
+
+    console.log(
+      `Transaction details: toAddress=${toAddress}, value=${value}, chainId=${chainId}`
+    )
 
     if (chainId !== CHAIN_ID) {
       bot.sendMessage(userId, 'Неверная сеть.')
@@ -215,3 +228,7 @@ bot.on('message', async msg => {
     bot.sendMessage(userId, 'Произошла ошибка при проверке транзакции.')
   }
 })
+
+module.exports = (req, res) => {
+  res.status(200).send('Bot is running!')
+}
