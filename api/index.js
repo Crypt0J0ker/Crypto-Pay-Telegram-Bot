@@ -3,7 +3,6 @@ const { MongoClient, ServerApiVersion } = require('mongodb')
 const axios = require('axios')
 const schedule = require('node-schedule')
 
-// Загружайте dotenv только в разработческой среде
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
