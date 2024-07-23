@@ -39,6 +39,7 @@ async function connectToDatabase() {
     return client.db('subscriptions')
   } catch (error) {
     console.error('MongoDB connection error:', error)
+    throw error
   }
 }
 
