@@ -20,3 +20,4 @@ coverage
 *.tmp_*.bak_*.bak_*.bak
 *.tmp_*.bak_*.bak_*.bak.*
 *.tmp_*.bak_*.bak_*.bak_*
+.vercel
